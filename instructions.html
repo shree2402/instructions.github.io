@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name.="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Q&A (Magic Leap)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Q&A (PC/Chrome Version)</title>
     
     <style>
         body {
@@ -22,16 +22,9 @@
         #context-text {
             font-size: 1.1em;
         }
-        #question-input {
-            width: 70%;
-            font-size: 1.1em;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        #ask-button {
-            font-size: 1.1em;
-            padding: 10px 15px;
+        #listen-button {
+            font-size: 1.2em;
+            padding: 12px 20px;
             cursor: pointer;
             background-color: #007bff;
             color: white;
@@ -63,10 +56,7 @@
 
         <hr>
         
-        <div>
-            <input type="text" id="question-input" placeholder="Use keyboard mic to ask...">
-            <button id="ask-button">Ask</button>
-        </div>
+        <button id="listen-button">🎤 Ask a Question</button>
 
         <div class="qa-box">
             <strong>Your Question:</strong>
@@ -81,35 +71,48 @@
 
     <script>
         
-        // --- Part 1: Connect JavaScript to the HTML elements ---
-        const askButton = document.getElementById('ask-button');
-        const questionInput = document.getElementById('question-input');
+        // --- Part 1: Connect to HTML ---
+        const listenButton = document.getElementById('listen-button');
         const questionDisplay = document.getElementById('question-display');
         const answerDisplay = document.getElementById('answer-display');
         
         const contextText = document.getElementById('context-text').innerText;
         const sentences = contextText.split(/[.?!]/g);
 
-        // --- Part 2: NO "Ears" needed! We just listen for the button click. ---
+        // --- Part 2: The "Ears" (Speech-to-Text) ---
+        // THIS IS THE PART MAGIC LEAP BLOCKS
         
-        askButton.addEventListener('click', () => {
-            // 1. Get the question from the text box
-            const questionText = questionInput.value;
-            
-            // 2. Show the question
-            questionDisplay.textContent = questionText;
-            
-            // 3. Find the answer
-            const answerText = findAnswer(questionText);
-            
-            // 4. Show the answer
-            answerDisplay.textContent = answerText;
-            
-            // 5. Speak the answer
-            speak(answerText);
-        });
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!window.SpeechRecognition) {
+            listenButton.disabled = true;
+            listenButton.textContent = "Browser Not Supported";
+            alert("Sorry, your browser doesn't support speech recognition.");
+        } else {
+            const recognition = new SpeechRecognition();
 
-        // --- Part 3: The "Brain" (This is exactly the same as before) ---
+            listenButton.addEventListener('click', () => {
+                questionDisplay.textContent = "Listening...";
+                answerDisplay.textContent = "...";
+                recognition.start(); // Turn on the microphone
+            });
+
+            recognition.onresult = (event) => {
+                const questionText = event.results[0][0].transcript;
+                questionDisplay.textContent = questionText;
+                
+                // Find and speak the answer
+                const answerText = findAnswer(questionText);
+                answerDisplay.textContent = answerText;
+                speak(answerText);
+            };
+            
+            recognition.onerror = (event) => {
+                questionDisplay.textContent = "Error listening: " + event.error;
+            };
+        }
+
+        // --- Part 3: The "Brain" (Finds Answer) ---
         
         function findAnswer(question) {
             const questionWords = question.toLowerCase().split(' ');
@@ -134,7 +137,8 @@
             return bestSentence;
         }
 
-        // --- Part 4: The "Mouth" (This is exactly the same as before) ---
+        // --- Part 4: The "Mouth" (Text-to-Speech) ---
+        // (Magic Leap might also block this, as we discovered)
         
         function speak(text) {
             const utterance = new SpeechSynthesisUtterance(text);
