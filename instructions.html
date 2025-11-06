@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name.="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Q&A (Magic Leap)</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #f7f7f7;
+        }
+        #container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        #context-text {
+            font-size: 1.1em;
+        }
+        #question-input {
+            width: 70%;
+            font-size: 1.1em;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #ask-button {
+            font-size: 1.1em;
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .qa-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #answer-display {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <h1>Article to Read</h1>
+        
+        <div id="context-text">
+            <p>The solar system is a gravitationally bound system of the Sun and the objects that orbit it. It formed 4.6 billion years ago from the gravitational collapse of a giant interstellar molecular cloud.</p>
+            <p>The four inner system planets are Mercury, Venus, Earth and Mars, which are terrestrial planets.</p>
+            <p>The four outer system planets are Jupiter, Saturn, Uranus and Neptune. Jupiter and Saturn are gas giants. The two outermost planets, Uranus and Neptune, are ice giants.</p>
+        </div>
+
+        <hr>
+        
+        <div>
+            <input type="text" id="question-input" placeholder="Use keyboard mic to ask...">
+            <button id="ask-button">Ask</button>
+        </div>
+
+        <div class="qa-box">
+            <strong>Your Question:</strong>
+            <div id="question-display">...</div>
+        </div>
+
+        <div class="qa-box">
+            <strong>Answer:</strong>
+            <div id="answer-display">...</div>
+        </div>
+    </div>
+
+    <script>
+        
+        // --- Part 1: Connect JavaScript to the HTML elements ---
+        const askButton = document.getElementById('ask-button');
+        const questionInput = document.getElementById('question-input');
+        const questionDisplay = document.getElementById('question-display');
+        const answerDisplay = document.getElementById('answer-display');
+        
+        const contextText = document.getElementById('context-text').innerText;
+        const sentences = contextText.split(/[.?!]/g);
+
+        // --- Part 2: NO "Ears" needed! We just listen for the button click. ---
+        
+        askButton.addEventListener('click', () => {
+            // 1. Get the question from the text box
+            const questionText = questionInput.value;
+            
+            // 2. Show the question
+            questionDisplay.textContent = questionText;
+            
+            // 3. Find the answer
+            const answerText = findAnswer(questionText);
+            
+            // 4. Show the answer
+            answerDisplay.textContent = answerText;
+            
+            // 5. Speak the answer
+            speak(answerText);
+        });
+
+        // --- Part 3: The "Brain" (This is exactly the same as before) ---
+        
+        function findAnswer(question) {
+            const questionWords = question.toLowerCase().split(' ');
+            let bestSentence = "Sorry, I could not find an answer in the text.";
+            let maxMatches = 0;
+
+            for (const sentence of sentences) {
+                let currentMatches = 0;
+                for (const word of questionWords) {
+                    if (word.length > 2 && sentence.toLowerCase().includes(word)) {
+                        currentMatches++;
+                    }
+                }
+                if (currentMatches > maxMatches) {
+                    maxMatches = currentMatches;
+                    bestSentence = sentence.trim();
+                }
+            }
+            if(maxMatches > 0 && !bestSentence.endsWith('.')) {
+                bestSentence += '.';
+            }
+            return bestSentence;
+        }
+
+        // --- Part 4: The "Mouth" (This is exactly the same as before) ---
+        
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+    </script>
+</body>
+</html>
